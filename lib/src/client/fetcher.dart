@@ -34,6 +34,7 @@ class ClientFetcher {
 
       final response = await graph.authorizationRepository.fetchAccessTokenCode(
         redirectedUrl: url,
+        mainRedirectedUrl: graph.linkedInConfiguration.redirectUrl ?? "",
         clientId: graph.linkedInConfiguration.clientId,
         clientSecret: graph.linkedInConfiguration.clientSecret,
         clientState: graph.linkedInConfiguration.state,
