@@ -11,6 +11,7 @@ class AuthorizationRepository {
 
   Future<AuthorizationCodeResponse> fetchAccessTokenCode({
     required final String redirectedUrl,
+    required final String mainRedirectedUrl,
     required final String? clientSecret,
     required final String? clientId,
     required final String clientState,
@@ -30,7 +31,7 @@ class AuthorizationRepository {
     );
 
     final tokenObject = await api.login(
-      redirectUrl: redirectedUrl.split('?')[0],
+      redirectUrl: mainRedirectedUrl,
       clientId: clientId,
       authCode: authorizationCode.code,
       clientSecret: clientSecret,
@@ -63,9 +64,7 @@ class AuthorizationRepository {
     final List<String> parseUrl = url.split('?');
 
     if (parseUrl.isNotEmpty) {
-      Map<String, String> queryParams = getQueryParameters(url);
-
-
+      final Map<String, String> queryParams = getQueryParameters(url);
 
       if (queryParams['code'] != null && queryParams['code']!.isNotEmpty) {
         final List<String> codePart = ['code', queryParams['code']!];
@@ -97,9 +96,9 @@ class AuthorizationRepository {
         }
       }
       else if (queryParams['error'] != null && queryParams['error']!.isNotEmpty) {
-        String errorValue = queryParams['error']!.replaceAll('+', ' ');
-        String? anotherKey = (queryParams.keys.toList()..remove("error")).firstOrNull;
-        String anotherValue = anotherKey != null ? queryParams[anotherKey]! : "N/A";
+        final String errorValue = queryParams['error']!.replaceAll('+', ' ');
+        final String? anotherKey = (queryParams.keys.toList()..remove("error")).firstOrNull;
+        final String anotherValue = anotherKey != null ? queryParams[anotherKey]! : "N/A";
 
         throw AuthCodeException(
           authCode: anotherValue,
