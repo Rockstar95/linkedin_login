@@ -63,11 +63,16 @@ class AuthorizationRepository {
     final List<String> parseUrl = url.split('?');
 
     if (parseUrl.isNotEmpty) {
-      final List<String> queryPart = parseUrl.last.split('&');
+      Map<String, String> queryParams = getQueryParameters(url);
 
-      if (queryPart.isNotEmpty && queryPart.first.startsWith('code')) {
-        final List<String> codePart = queryPart.first.split('=');
-        final List<String> statePart = queryPart.last.split('=');
+
+
+      if (queryParams['code'] != null && queryParams['code']!.isNotEmpty) {
+        final List<String> codePart = ['code', queryParams['code']!];
+        final List<String> statePart = [];
+        if(queryParams.containsKey('state')) {
+          statePart.addAll(['state', queryParams['state']!]);
+        }
 
         if (_isAuthUrlEmpty(codePart, statePart)) {
           throw AuthCodeException(
@@ -90,10 +95,15 @@ class AuthorizationRepository {
                 'Current auth code is different from initial one: $clientState',
           );
         }
-      } else if (queryPart.isNotEmpty && queryPart.first.startsWith('error')) {
+      }
+      else if (queryParams['error'] != null && queryParams['error']!.isNotEmpty) {
+        String errorValue = queryParams['error']!.replaceAll('+', ' ');
+        String? anotherKey = (queryParams.keys.toList()..remove("error")).firstOrNull;
+        String anotherValue = anotherKey != null ? queryParams[anotherKey]! : "N/A";
+
         throw AuthCodeException(
-          authCode: queryPart.length > 1 ? queryPart[1].split('=')[1] : 'N/A',
-          description: queryPart[0].split('=')[1].replaceAll('+', ' '),
+          authCode: anotherValue,
+          description: errorValue,
         );
       }
     }
@@ -112,5 +122,26 @@ class AuthorizationRepository {
         state.length < 2 ||
         code[1].isEmpty ||
         state[1].isEmpty;
+  }
+
+  Map<String, String> getQueryParameters(String path) {
+    print("AuthorizationRepository().getQueryParameters() called with path:'$path'");
+
+    final Map<String, String> queryParams = <String, String>{};
+    if (path.contains('?')) {
+      path = path.substring(path.indexOf('?'));
+      path = path.replaceAll('?', '');
+
+      final List<String> parameters = path.split('&');
+      for (String parameterString in parameters) {
+        final List<String> values = parameterString.split('=');
+        if (values.isNotEmpty) {
+          queryParams[values.first] = values.elementAtOrNull(1) ?? '';
+        }
+      }
+    }
+    print('Final queryParams:$queryParams');
+
+    return queryParams;
   }
 }
